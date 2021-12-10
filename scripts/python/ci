@@ -1,0 +1,88 @@
+#!/usr/bin/env python
+
+import subprocess
+import traceback
+import json
+import re
+
+
+class Git:
+    def get_staged_files(self):
+        staged_files = []
+        cmd = [
+            "git diff `git merge-base HEAD origin/master`..HEAD --name-only --diff-filter=d"
+        ]
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+
+        while True:
+            line = process.stdout.readline()
+            staged_files.append(line.strip())
+            if not line:
+                break
+        return staged_files
+
+
+class Test:
+    def __init__(self):
+        self.__affected_domains = []
+
+    def __get_domains(self):
+        with open("./registered.json") as domain_registered_json:
+            return json.load(domain_registered_json)
+
+    def __all_domain_string_search(self):
+        domain_list = self.__get_domains()
+        delimiter = "|"
+        return delimiter.join([d["name"] for d in domain_list])
+
+    def set_affected_domains_by_staged_files(self, staged_files):
+        domain_str_search = self.__all_domain_string_search()
+        for staged in staged_files:
+            searched = re.search(domain_str_search, staged)
+            if searched != None:
+                self.__affected_domains.append(searched.group())
+
+    def __get_tests_file_by_domain(self, domain):
+        with open("./domain/{domain}/tests/main.json".format(
+                domain=domain)) as test_json:
+            return json.load(test_json)
+
+    def __match_test(self, test_json):
+        for test in test_json:
+            if test["input"] == "/login":
+                test["pass"] = True
+
+    def run_test(self):
+        print("affected domains: {domains}".format(
+            domains=self.__affected_domains))
+
+        result_map = {}
+        for domain in self.__affected_domains:
+            test_json = self.__get_tests_file_by_domain(domain)
+            self.__match_test(test_json)
+            result_map[domain] = test_json
+
+        for result in result_map:
+            test_result = result_map[result]
+            for result in test_result:
+                if "pass" not in result:
+                    raise Exception("Fail test on: {test_url}".format(
+                        test_url=result["input"]))
+
+
+def main():
+    try:
+        git_instance = Git()
+        staged_files = git_instance.get_staged_files()
+        test_instace = Test()
+        test_instace.set_affected_domains_by_staged_files(staged_files)
+        test_instace.run_test()
+
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
+        exit(1)
+
+
+if __name__ == '__main__':
+    main()

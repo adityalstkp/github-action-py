@@ -1,0 +1,2 @@
+test:
+	./scripts/python/ci
