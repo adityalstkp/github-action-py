@@ -13,7 +13,7 @@ jobs:
          with:
             ref: ${{ github.event.pull_request.head.sha }}
             fetch-depth: 0
-       - run: echo "✅  ${{ github.event.pull_request.head.sha }} has been checkout"
+       - run: echo "✅   ${{ github.event.pull_request.head.sha }} has been checkout"
        - name: Setup pyhton and Run Test
          uses: actions/setup-python@v2
          with:

@@ -78,6 +78,8 @@ def main():
         test_instace.set_affected_domains_by_staged_files(staged_files)
         test_instace.run_test()
 
+        print("success")
+        exit(0)
     except Exception as e:
         print(e)
         traceback.print_exc()
