@@ -1,5 +1,8 @@
 [
     {
-        "input": "/sikatjon"
+        "input": "/login"
+    },
+    {
+        "input": "/login"
     }
 ]
